@@ -1,0 +1,9 @@
+{
+    "name" : "Hover Tube",
+    "description" : "Base level extension as of now",
+    "version" : "0.1",
+    "manifest_version" : 3,
+    "action" : {
+        "default_action" : "hello.html"
+    }
+}
