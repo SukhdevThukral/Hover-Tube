@@ -1,8 +1,15 @@
 {
     "name" : "Hover Tube",
-    "description" : "Base level extension as of now",
+    "description" : "wait wow",
     "version" : "0.1",
     "manifest_version" : 3,
+    "content_scripts" : [
+        {
+            "matches" : ["<all_urls>"],
+            "js" : ["content.js"],
+            "css" : ["hover.css"]
+        }
+    ],
     "action" : {
         "default_popup" : "hello.html"
     }
