@@ -1,1 +1,3 @@
-YT_api = "AIzaSyAVt8r55iq8UfJazy-o5IzrI9dKz93BRV0"
+const CONFIG = {
+    YT_api: "AIzaSyAVt8r55iq8UfJazy-o5IzrI9dKz93BRV0"
+};
