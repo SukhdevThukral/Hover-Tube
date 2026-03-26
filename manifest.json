@@ -6,10 +6,11 @@
     "content_scripts" : [
         {
             "matches" : ["<all_urls>"],
-            "js" : ["content.js"],
+            "js" : ["config.js", "content.js"],
             "css" : ["hover.css"]
         }
     ],
+    "host_permissions": ["https://www.googleapis.com/*"],
     "action" : {
         "default_popup" : "hello.html"
     }

@@ -1,3 +1,5 @@
+
+
 console.log("%c >>> HOVER TUBE ACTIVE <<< ", "color: yellow; background: black; font-size: 20px;");
 
 let hoverTime;
@@ -11,6 +13,7 @@ document.addEventListener('mouseover', (e) => {
     if (videoId) {
         hoverTime = setTimeout(() => {
             renderPopup(e.pageX, e.pageY, videoId);
+            updatePopupWithData(videoId);
         }, 400);
     }
 });
@@ -30,10 +33,61 @@ function extractId(url) {
 }
 
 function renderPopup(x,y,id){
+
+    if (popup) popup.remove();
+
     popup = document.createElement('div')
     popup.className = 'hover-tube-card';
     popup.style.left = `${x + 15}px`;
     popup.style.top = `${y + 15}px`;
-    popup.innerHTML = `<strong>Video ID:</strong> ${id}<br><em>Fetching stats...</em>`;
+
+    popup.innerHTML = `
+        <div style = "font-family: sans-serif; min-width: 150px;">
+            <div style="color: #aaa; font-size: 10px;">ID: ${id}</div>
+            <div style="margin-top: 5px;">Fetching stats...</div>
+        </div>
+    `;
     document.body.appendChild(popup);
+}
+
+async function updatePopupWithData(id){
+    if (!popup) return;
+
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${id}&key=${CONFIG.YT_api}`;
+
+    try{
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.items && data.items.length > 0){
+            const video = data.items[0];
+            const title = video.snippet.title;
+            const views = Number(video.statistics.viewCount).toLocaleString();
+            const likes = video.statistics.likeCount
+            ? Number(video.statistics.likeCount).toLocaleString()
+            : "N/A";
+        
+
+        popup.innerHTML = `
+            <div style="font-family: sans-serif; max-width: 280px;">
+                <div style="font-weight: 700; font-size: 14px; margin-bottom: 8px; color: #fff;">
+                    ${title}
+                </div>
+                <div style="display: flex; gap: 15px; border-top: 1px solid #444; padding-top: 8px;">
+                    <div>
+                        <div style="color: #aaa; font-size: 10px; text-transform: uppercase;">Views</div>
+                        <div style="color: #fff; font-weight: 600; font-size: 13px;">${views}</div>
+                    </div>
+                    <div>
+                        <div style="color: #aaa; font-size: 10px; text-transform: uppercase;">Likes</div>
+                        <div style="color: #fff; font-weight: 600; font-size: 13px;">${likes}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+    } catch (err) {
+        console.error("Fetch Error:", err)
+        if (popup) popup.innerHTML= "<div>ERRRR ERRRRR ERRRRRR</div>"
+    }
 }
