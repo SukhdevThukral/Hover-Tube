@@ -81,6 +81,9 @@ async function updatePopupWithData(id){
                                 <div style="color: #fff; font-weight: 600; font-size: 13px;">${likes}</div>
                             </div>
                         </div>
+                        <div id="ai-summary-box" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #555; font-size: 10px; line-height: 1.4;">
+                            <span style="color: #aaa; font-style: italic;">Generating AI Summary...</span>
+                        </div>
                     </div>
             `;
 
@@ -100,7 +103,7 @@ async function updatePopupWithData(id){
                     sumamryBox.innerHTML = `<span style="color: #ff4d4d;">Summary unavailable for this video.</span>`;
                 }
             });
-            
+
             } else {
                 popup.innerHTML = "<div>vid cant be found</div>"
             }

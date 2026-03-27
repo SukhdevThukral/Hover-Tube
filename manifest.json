@@ -14,7 +14,7 @@
             "css" : ["hover.css"]
         }
     ],
-    "host_permissions": ["https://www.googleapis.com/*"],
+    "host_permissions": ["https://www.googleapis.com/*", "https://www.youtube.com/*", "https://generativelanguage.googleapis.com/*"],
     "action" : {
         "default_popup" : "hello.html"
     }

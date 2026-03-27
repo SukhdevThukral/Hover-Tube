@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === "getAISummary"){
-        fetchSummary(request.id, request.title).then(summaru => sendResponse({success: true, summary}))
+        fetchSummary(request.id, request.title, request.author, request.description).then(summary => sendResponse({success: true, summary}))
             .catch(err => sendResponse({success: false, error: err.message}));
         return true;
     }
@@ -48,8 +48,9 @@ async function getTranscript(videoId) {
 async function fetchSummary(videoId, title, author, description){
     const transcript = await getTranscript(videoId);
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.gem_api}`
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CONFIG.gem_api}`
 
+    const safeDesc = (description || "").substring(0,300);
     const prompt = `
     you are an expert content summarizer, generate a concise and accurate summary of the
     folowing youtube video.
@@ -84,5 +85,10 @@ async function fetchSummary(videoId, title, author, description){
     const data = await response.json();
 
     if (data.error) throw new Error(data.error.message);
+
+    if (!data.candidates || !data.candidates[0].content){
+        throw new Error("Gemnini returned an empty response :(");
+    }
+
     return data.candidates[0].content.parts[0].text;
 }
