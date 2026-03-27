@@ -83,6 +83,24 @@ async function updatePopupWithData(id){
                         </div>
                     </div>
             `;
+
+            chrome.runtime.sendMessage({
+                action: "getAISummary",
+                id: id,
+                title: title,
+                author: video.snippet.channelTitle,
+                description: video.snippet.description
+            }, (aiResponse) => {
+                const sumamryBox = document.getElementById('ai-summary-box');
+                if (!sumamryBox || !popup || !document.contains(popup)) return;
+
+                if (aiResponse && aiResponse.success){
+                    sumamryBox.innerHTML = `<span style="color: #4da6ff; font-weight: bold;">TL;DR:</span> ${aiResponse.summary}`;
+                } else {
+                    sumamryBox.innerHTML = `<span style="color: #ff4d4d;">Summary unavailable for this video.</span>`;
+                }
+            });
+            
             } else {
                 popup.innerHTML = "<div>vid cant be found</div>"
             }
