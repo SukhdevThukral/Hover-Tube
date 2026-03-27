@@ -34,14 +34,23 @@ function renderPopup(x,y,id){
 
     popup = document.createElement('div')
     popup.className = 'hover-tube-card';
-    popup.style.left = `${x + 15}px`;
-    popup.style.top = `${y + 15}px`;
+
+    const finalX = (x+350 > window.innerWidth) ? x - 350 : x + 20;
+    const finalY = (y+250 > window.innerHeight) ? y- 250 : y + 20;
+
+    popup.style.left = `${finalX}px`;
+    popup.style.top = `${finalY}px`;
 
     popup.innerHTML = `
-        <div style = "font-family: sans-serif; min-width: 150px;">
-            <div style="color: #aaa; font-size: 10px;">ID: ${id}</div>
-            <div style="margin-top: 5px;">Fetching stats...</div>
+        <div class="ht-meta-header">
+            <span class="ht-brand-tag">Analyzing</span>
+            <span class="font-size: 10px; color: #fff; font-family: monospace;">ID: ${id}</span>
         </div>
+        <div style="font-weight: 600;color: #fff; margin-bottom: 8px; font-size: 14px;" id="ht-title">
+            Fetching YouTube Data...
+        </div>
+        <div class="ht-scanner" id="ht-loader"></div>
+        <div id="ai-summary-box" style="opacity: 0; transform: translateY(10px); display: none;"></div>
     `;
     document.body.appendChild(popup);
 }
@@ -65,6 +74,10 @@ async function updatePopupWithData(id){
                 ? Number(video.statistics.likeCount).toLocaleString()
                 : "N/A";
                 
+                const titleEl = document.getElementById('ht-title');
+                const brandTag = document.querySelector('.ht-brand-tag');
+                if (titleEl) titleEl.innerText = title;
+                if (brandTag) brandTag.innerText = "Summarizing";
                 
                 popup.innerHTML = `
                     <div style="font-family: sans-serif; max-width: 280px;">
