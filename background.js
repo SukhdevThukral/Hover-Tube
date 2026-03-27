@@ -28,17 +28,26 @@ async function getTranscript(videoId) {
     try {
         const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
         const html = await response.text();
+        
+        const regex = /"captionTracks":\s*(\[.*?\])/;
+        const match= html.match(regex);
+        if (!match) return null;
 
-        const parts = html.split('"captionTracks":[');
-        if (parts.length <2 ) return null;
-
-        const trackPart = parts[1].split(`]`)[0];
-        const track = JSON.parse(`{"data": [${trackPart}] }`).data[0];
+        const captionTracks = JSON.parse(match[1]);
+        const track = captionTracks.find(t => t.vssId.startsWith('.en')) || captionTracks[0];
 
         const xmlResponse = await fetch(track.baseUrl);
         const xml = await xmlResponse.text();
 
-        return xml.replace(/<[^>]*>/g, ' ').replace(/&amp;#39;/g, "'").substring(0, 5000);
+        let cleanText = xml.replace(/<text>[^>]*>/g, ' ').replace(/<\/text>/g, ' ').replace(/&amp;#39;/g, "'")
+        .replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+
+        if (cleanText.length > 8000){
+            const start = cleanText.substring(0,4000);
+            const end = cleanText.substring(cleanText.length - 4000);
+            return `[START OF VIDEO]: ${start} ... [END OF VIDEO]: ${end}`;
+        }
+        return cleanText;
 
     } catch(e){
         return null;
@@ -50,7 +59,7 @@ async function fetchSummary(videoId, title, author, description){
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.gem_api}`
 
-    const safeDesc = (description || "").substring(0,300);
+    const safeDesc = (description || "No description is provided").substring(0,300);
     const prompt = `
     you are an expert content summarizer, generate a concise and accurate summary of the
     folowing youtube video.
@@ -58,7 +67,7 @@ async function fetchSummary(videoId, title, author, description){
     inputs:
     Author: ${author}
     Title: ${title}
-    Description: ${description.substring(0, 300)}
+    Description: ${safeDesc}
     Transcript Snippet: ${transcript || "N/A"}
 
     Instructions:
