@@ -1,12 +1,3 @@
-
-
-console.log("%c >>> HOVER TUBE ACTIVE <<< ", "color: yellow; background: black; font-size: 20px;");
-
-if (typeof CONFIG === 'undefined'){
-    console.error("critical: config is still not defined");
-    var CONFIG = {YT_api: ""};
-}
-
 let hoverTime;
 let popup;
 
