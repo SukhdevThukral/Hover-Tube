@@ -48,7 +48,7 @@ async function getTranscript(videoId) {
 async function fetchSummary(videoId, title, author, description){
     const transcript = await getTranscript(videoId);
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CONFIG.gem_api}`
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.gem_api}`
 
     const safeDesc = (description || "").substring(0,300);
     const prompt = `
@@ -62,16 +62,27 @@ async function fetchSummary(videoId, title, author, description){
     Transcript Snippet: ${transcript || "N/A"}
 
     Instructions:
-    1. if a transcript is provided, prioritize it as the primary source and summarise based strictly on what is said.
-    2. if no transcription is available, infer the core message from the title and description only.
-    3. focus on the main idea or key takeaway - avoid filler, speculation, or minor details.
-    4. ensure factual alignment with the provided content
+    1. if a transcript is provided, base the summary strictly on it. Ignore assumptions from title/description unless supported.
+    2.  If no transcript is available, infer the core message only from the title and description.
+    3. Identify and summarize the single core argument or key takeaway of the video (not just topics).
+    4. avoid generic phrasing like "the video discusses" or "explores".
+    5. do not include minor details, examples, or filler.
+    6. ensure factual accuracy with no added assumptions.
+    7. do not use uncertain or hedgin language (e.g., "likely", "appears", "suggests").
+    8. write the summary as a definitive statement of the main conclusion.
+    9. do not restate the same idea in different words
+
+    good examples:
+    ❌ Bad: The video discusses the impact of social media on society.
+    ✅ Good: Social media platforms amplify misinformation by prioritizing engagement over accuracy.
+
+    ❌ Bad: The video explores India's food culture and debates.
+    ✅ Good: Claims about uniform Hindu dietary restrictions are misleading, as historical and regional practices show significant variation.
 
     Output Requirements:
-    - maximum 2-3 sentences.
-    - clear, direct, and informative
-    - begin with exactly one revelant emoji
-    - do not include any extra commentary, labels or formatting
+    - 1-2 sentences (prefer 1 if possible).
+    - clear, specific, and conclusion-focused
+    - no extra commentary or labels
 
     `;
 
