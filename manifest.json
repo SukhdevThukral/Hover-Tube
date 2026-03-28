@@ -11,6 +11,11 @@
         "service_worker": "background.js",
         "type": "module"
     },
+    "icons":{
+        "16" : "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+    },
     "content_scripts" : [
         {
             "matches" : ["<all_urls>"],
@@ -20,6 +25,7 @@
     ],
     "host_permissions": ["https://www.googleapis.com/*", "https://www.youtube.com/*", "https://generativelanguage.googleapis.com/*"],
     "action" : {
+        "default_icon" : "icon.png",
         "default_popup" : "hello.html"
     }
 }

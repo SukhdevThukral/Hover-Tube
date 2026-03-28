@@ -147,9 +147,23 @@
         </p>
 
         <div class="key-section">
+
             <div style="font-size: 9px; color: #555; margin-bottom: 6px; text-transform: uppercase; font-weight: 800;">Gemini API Key</div>
-            <input type="password" id="api-key-input" placeholder="Paste your API key here...">
-            <button id="save-key">SAVE CONFIG</button>
+
+            <div id="key-input-container">
+                <input type="password" id="api-key-input" placeholder="Paste your API key here...">
+                <button id="save-key">SAVE CONFIG</button>
+            </div>
+            
+            <div id="key-active-container" style="display: none; text-align: center; padding: 10px 0;">
+                <div style="color: #00ff88; font-size: 11px; font-weight: 700; margin-bottom: 8px;">
+                    KEY ACTIVE • READY TO SCAN
+                </div>
+                <button id="change-key" style="background: transparent; border: 1px solid #333; font-size: 9px; padding: 4px 10px; border-radius: 4px; cursor: pointer;">
+                    REPLACE KEY
+                </button>
+            </div>
+            
             <div id="save-status" style="font-size: 9px; margin-top: 6px; color: #00ff88; opacity: 0; text-align: center;">Configuration Updated!</div>
         </div>
 
