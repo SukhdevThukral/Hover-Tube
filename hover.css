@@ -28,4 +28,42 @@
 
 .ht-scanner{
     position: relative;
+    height: 2px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 12px 0;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.ht-scanner::after {
+    content : "";
+    position: absolute;
+    left: -50%;
+    height: 100%;
+    width: 50%;
+    background: linear-gradient(90deg, transparent, #4dbaff, transparent);
+    animation: scan 1.2s cubic-bezier(0.4,0,0.2,1) infinite;
+}
+
+@keyframes scan {
+    from {left:-50%;}
+    to {left: 100%};
+}
+
+.ht-meta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.ht-brand-tag {
+    font-size: 10px;
+    font-weight: 800;
+    color: #4dbaff;
+    background: rgba(77, 186, 255, 0.1);
+    padding: 2px 8px;
+    border-radius:  20px;
+    text-transform: uppercase;
 }

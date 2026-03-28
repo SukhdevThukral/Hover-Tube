@@ -1,24 +1,36 @@
-let hoverTime;
-let popup;
+let hoverTime,popup, currentId;
 
 document.addEventListener('mouseover', (e) => {
     const link = e.target.closest('a');
     if (!link) return;
 
     const videoId = extractId(link.href);
-    if (videoId) {
+    if (videoId && videoId !== currentId) {
+        clearTimeout(hoverTime);
         hoverTime = setTimeout(() => {
+            currentId = videoId;
             renderPopup(e.pageX, e.pageY, videoId);
             updatePopupWithData(videoId);
         }, 400);
     }
 });
 
-document.addEventListener('mouseout', () => {
+document.addEventListener('mouseout', (e) => {
+    const link =  e.target.closest('a');
+    if (!link) return;
+
     clearTimeout(hoverTime);
     if (popup) {
-        popup.remove();
-        popup = null;
+        gsap.to(popup,{
+            opacity: 0, 
+            scale: 0.95,
+            duration: 0.2,
+            onComplete: () => {
+                if (popup) popup.remove();
+                popup = null;
+                currentId = null;
+            }
+        });
     }
 });
 
@@ -63,10 +75,7 @@ async function updatePopupWithData(id){
     if (!popup) return;
 
     chrome.runtime.sendMessage({action: "getYTData", id: id}, (response) => {
-        if (!popup || !document.contains(popup)){
-            console.log("popup was closed before fetch got overr")
-            return;
-        }
+        if (!popup || !document.contains(popup) || id !== currentId) return;
         
         if (response && response.success){
             const data =  response.data;
@@ -90,12 +99,13 @@ async function updatePopupWithData(id){
                     author: video.snippet.channelTitle,
                     description: video.snippet.description
                 }, (aiResponse) => {
-                    const sumamryBox = document.getElementById('ai-summary-box');
+                    const summaryBox = document.getElementById('ai-summary-box');
                     const loaderEl  = document.getElementById('ht-loader');
-                    if (!sumamryBox || !popup || !document.contains(popup)) return;
+
+                    if (!summaryBox || !popup || !document.contains(popup) || id !== currentId) return;
 
                     if (aiResponse && aiResponse.success){
-                        sumamryBox.innerHTML = 
+                        summaryBox.innerHTML = 
                         `
                         <div style="color: #4dbaff; font-size: 10px; font-weight: 800; margin-bottom: 4px; text-transform: uppercase;">Conclusion</div>
                         <div style="color: #eee; font-size: 13.5px; line-height:1.5;">${aiResponse.summary}</div>
@@ -107,12 +117,12 @@ async function updatePopupWithData(id){
                         </div>
                         `;
                     } else {
-                        sumamryBox.innerHTML = `<span style="color: #ff4d4d;">AI was unable to process this video.</span>`;
+                        summaryBox.innerHTML = `<span style="color: #ff4d4d;">AI was unable to process this video.</span>`;
                     }
 
-                    sumamryBox.style.display = 'block';
+                    summaryBox.style.display = 'block';
                     const tl = gsap.timeline();
-                    tl.to(loaderEl, {opacity: 0, height: 0, margin: 0, duration: 0.3}).to(sumamryBox, {
+                    tl.to(loaderEl, {opacity: 0, height: 0, margin: 0, duration: 0.3}).to(summaryBox, {
                         opacity: 1, y:0, duration: 0.5, ease:"power3.out"
                     }, "-=0.1"). set(document.querySelector('.ht-brand-tag'), {
                         innerText: "Ready",
