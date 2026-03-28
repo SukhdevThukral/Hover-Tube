@@ -1,6 +1,3 @@
-
-## Badges
-
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/) ![Version](https://img.shields.io/badge/Version-0.1--Beta-00f?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-System--Online-00f?style=for-the-badge)
 ![Manifest](https://img.shields.io/badge/Manifest-V3-orange?style=for-the-badge)
