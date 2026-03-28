@@ -21,14 +21,18 @@ document.addEventListener('mouseout', (e) => {
 
     clearTimeout(hoverTime);
     if (popup) {
+
+        currentId = null;
+
         gsap.to(popup,{
             opacity: 0, 
             scale: 0.95,
             duration: 0.2,
             onComplete: () => {
-                if (popup) popup.remove();
-                popup = null;
-                currentId = null;
+                if (popup && !currentId){
+                    popup.remove();
+                    popup = null;
+                } 
             }
         });
     }
@@ -55,7 +59,7 @@ function renderPopup(x,y,id){
     popup.innerHTML = `
         <div class="ht-meta-header">
             <span class="ht-brand-tag">Analyzing</span>
-            <span class="font-size: 10px; color: #fff; font-family: monospace;">ID: ${id}</span>
+            <span style="font-size: 10px; color: #fff; font-family: monospace;">ID: ${id}</span>
         </div>
         <div style="font-weight: 600;color: #fff; margin-bottom: 8px; font-size: 14px;" id="ht-title">
             Fetching YouTube Data...
