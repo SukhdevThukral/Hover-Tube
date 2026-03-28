@@ -78,7 +78,15 @@ function renderPopup(x,y,id){
 async function updatePopupWithData(id){
     if (!popup) return;
 
-    chrome.runtime.sendMessage({action: "getYTData", id: id}, (response) => {
+    if ( typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.id) {
+        console.warn("Hover Tube: Extension context invalidated. Please refresh the page.");
+        const titleEl = document.getElementById('ht-title');
+        if (titleEl) titleEl.innerText = "Please refresh the page to continue.";
+        return;
+    }
+
+    try{
+        chrome.runtime.sendMessage({action: "getYTData", id: id}, (response) => {
         if (!popup || !document.contains(popup) || id !== currentId) return;
         
         if (response && response.success){
@@ -142,5 +150,9 @@ async function updatePopupWithData(id){
                 if (loader) loader.style.display = 'none';
             }
         } 
-    });
+        });
+    } catch (err){
+        console.error('Communication breakdown:', err);
+    }
+
 }

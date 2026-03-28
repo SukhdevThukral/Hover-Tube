@@ -2,6 +2,10 @@
     "name" : "Hover Tube",
     "description" : "wait wow",
     "version" : "0.1",
+    "permissions" : [
+        "storage",
+        "tabs"
+    ],
     "manifest_version" : 3,
     "background" : {
         "service_worker": "background.js",

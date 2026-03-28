@@ -1,27 +1,34 @@
 import {CONFIG} from "./config.js";
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "getYTData"){
-        const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${request.id}&key=${CONFIG.YT_api}`;
+    chrome.storage.local.get(['gem_api'], (result) => {
+        const userKey = result.gem_api;
 
-        fetch(url)
-            .then(res=>res.json()).then(data => {
-                if (data.error){
-                    sendResponse({success: false, error: data.error.message});
-                } else {
-                    sendResponse({success: true, data: data});
-                }
-            })
-            .catch(err => sendResponse({success: false, error: err.message}));
-        
-        return true;
-    }
+        if (request.action === "getYTData"){
+            const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${request.id}&key=${CONFIG.YT_api}`;
 
-    if (request.action === "getAISummary"){
-        fetchSummary(request.id, request.title, request.author, request.description).then(summary => sendResponse({success: true, summary}))
-            .catch(err => sendResponse({success: false, error: err.message}));
-        return true;
-    }
+            fetch(url)
+                .then(res=>res.json()).then(data => {
+                    if (data.error){
+                        sendResponse({success: false, error: data.error.message});
+                    } else {
+                        sendResponse({success: true, data: data});
+                    }
+                })
+                .catch(err => sendResponse({success: false, error: err.message}));
+        }
+        if (request.action === "getAISummary"){
+            if (!userKey) {
+                sendResponse({success:false, error: "Please set your Gemini API Key in the extension popup!!"});
+                return;
+            }
+
+            fetchSummary(request.id, request.title, request.author, request.description, userKey).then(summary => sendResponse({success: true, summary}))
+                .catch(err => sendResponse({success: false, error: err.message}));
+        }
+    });
+
+    return true;
 });
 
 async function getTranscript(videoId) {
@@ -39,8 +46,8 @@ async function getTranscript(videoId) {
         const xmlResponse = await fetch(track.baseUrl);
         const xml = await xmlResponse.text();
 
-        let cleanText = xml.replace(/<text>[^>]*>/g, ' ').replace(/<\/text>/g, ' ').replace(/&amp;#39;/g, "'")
-        .replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+        let cleanText = xml.replace(/<[^>]*>/g, ' ').replace(/&amp;#39;/g, ' ').replace(/&quot;/g, "'")
+        .replace(/\s+/g, '"').trim();
 
         if (cleanText.length > 8000){
             const start = cleanText.substring(0,4000);
@@ -48,16 +55,15 @@ async function getTranscript(videoId) {
             return `[START OF VIDEO]: ${start} ... [END OF VIDEO]: ${end}`;
         }
         return cleanText;
-
     } catch(e){
         return null;
     }
 }
 
-async function fetchSummary(videoId, title, author, description){
+async function fetchSummary(videoId, title, author, description, apiKey){
     const transcript = await getTranscript(videoId);
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.gem_api}`
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
 
     const safeDesc = (description || "No description is provided").substring(0,300);
     const prompt = `

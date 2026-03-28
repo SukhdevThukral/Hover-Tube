@@ -70,10 +70,49 @@
                 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px #00ff88;}
             }
 
+            .key-section {
+                margin: 20px 0;
+                padding: 12px;
+                background: rgba(255,255,255,0.03);
+                border-radius: 12px;
+                border: 1px solid rgba(255,255,255,0.05);
+            }
+
+            input{
+                width: 100%;
+                background: #111;
+                border: 1px solid #222;
+                border-radius: 6px;
+                padding: 8px;
+                color: #fff;
+                font-size: 11px;
+                font-family: monospace;
+                outline: none;
+                box-sizing: border-box;
+                margin-bottom: 8px;
+            }
+
+            input:focus {border-color: #4dbaff;}
+
+            #save-key {
+                width: 100%;
+                background: #f5f5f7;
+                border: none;
+                border-radius: 6px;
+                padding: 8px;
+                color: #000;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 11px;
+                transition: opacity 0.2s;
+            }
+
+            #save-key:active {opacity: 0.8;}
+
             .desc {
                 font-size: 13px;
                 color: #888;
-                line-height: 1.6;
+                line-height: 1.5;
                 margin: 0;
             }
 
@@ -106,9 +145,19 @@
         <p class="desc">
             Hover over any YouTube link to analyze the content and get a fixed AI conclusion instantly :3.
         </p>
+
+        <div class="key-section">
+            <div style="font-size: 9px; color: #555; margin-bottom: 6px; text-transform: uppercase; font-weight: 800;">Gemini API Key</div>
+            <input type="password" id="api-key-input" placeholder="Paste your API key here...">
+            <button id="save-key">SAVE CONFIG</button>
+            <div id="save-status" style="font-size: 9px; margin-top: 6px; color: #00ff88; opacity: 0; text-align: center;">Configuration Updated!</div>
+        </div>
+
         <div class="footer">
             <span>V0.1-STABLE</span>
             <span>sukhdevthukral.xyz</span>
         </div>
+
+        <script src="popup-logic.js"></script>
     </body>
 </html>
