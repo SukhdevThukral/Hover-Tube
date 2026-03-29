@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 return;
             }
 
-            fetchSummary(request.id, request.title, request.author, request.description, userKey).then(summary => sendResponse({success: true, summary}))
+            fetchSummary(request.id, request.title, request.author, request.description, userKey, sender.tab.id).then(summary => sendResponse({success: true, summary}))
                 .catch(err => sendResponse({success: false, error: err.message}));
         }
     });
@@ -36,64 +36,64 @@ async function getTranscript(videoId) {
         const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
         const html = await response.text();
         
-        console.log("[Transcript] HTML fetched, length:", html.length);
 
         const splitHtml = html.split('"captionTracks":')
-        console.log("[Transcript] captionTracks splits found:", splitHtml.length);
 
         if (splitHtml.length < 2 ){
-            console.warn("[Transcript] 'captionTracks' ntot found in HTML, yt didnt return caption data");
             return null;
         }
 
         const lastPart = splitHtml[1].split(']')[0] + ']';
-        console.log("[Transcript] raw caption json slide:", lastPart.substring(0,200));
 
         let captions;
         try {
             captions = JSON.parse(lastPart); 
-            console.log("[Transcript] Parsed captions count:", captions.length);
-            console.log("[Transcript] Available languages:", captions.map(t => t.languageCode));
         } catch(parseErr){
-            console.warn("[Transcript] ❌ PROBLEM: JSON.parse failed on caption slice:", parseErr.message);
-            console.log("[Transcript] Problematic string was:", lastPart.substring(0, 500));
             return null;
         }
 
         
 
         const track = captions.find(t => t.languageCode === 'en') || captions[0];
-        console.log("[Transcript] Selected track:", track?.languageCode, "| has baseUrl:", !!track?.baseUrl);
 
         if(!track || !track.baseUrl){
-            console.warn("[Transcript] no valid track or baseUrl found");
             return null;
         }
 
 
-        const xmlRes = await fetch(track.baseUrl);
-        const xmlText = await xmlRes.text();
-        console.log("[Transcript] Is actual XML?", xmlText.trimStart().startsWith('<?xml'));
-        console.log("[Transcript] XML fetched, length:", xmlText.length);
-        console.log("[Transcript] XML preview:", xmlText.substring(0, 300));       
-
-        const result =  xmlText.replace(/<text/g, ' ')
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/&amp;#39;/g, "'")
-        .replace(/&amp;quot;/g, '"').replace(/\s+/g, ' ').trim().substring(0, 10000);
-
-        console.log("[Transcript] ✅ Final transcript length:", result.length);
-        console.log("[Transcript] Transcript preview:", result.substring(0, 200));
-        return result;
+        return track.baseUrl;
+        
 
     } catch(e){
-        console.warn("[Transcript] uncaught error", e)
         return null;
     }
 }
 
-async function fetchSummary(videoId, title, author, description, apiKey){
-    const transcript = await getTranscript(videoId);
+async function fetchSummary(videoId, title, author, description, apiKey, tabID){
+    const baseUrl = await getTranscript(videoId)
+
+    let transcript = null;
+    if (baseUrl && tabID) {
+        console.log("[Summary] Sending fetchXML to tabId", tabID, "url:", baseUrl.substring(0,100));
+
+        transcript = await new Promise((resolve) => {
+            chrome.tabs.sendMessage(tabID, {action: "fetchXML", url: baseUrl}, (response) => {
+                console.log("[Summary] fetchXML response:", response);
+                if (response?.success && response.text.trimStart().startsWith('<?xml')) {
+
+                    const cleaned = response.text.replace(/<text/g, ' ').replace(/<[^>]*>/g, ' ')
+                    .replace(/&amp;#39;/g, "'").replace(/&amp;quot;/g, '"').replace(/\s+/g, ' ')
+                    .trim().substring(0,10000);
+                    resolve(cleaned);
+                } else{
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    console.log("[Summary] Transcript received:", transcript ? transcript.substring(0, 200) : "NULL - will use title/description");
+    console.log("[Summary] Sending to Gemini with transcript?", !!transcript);
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
 

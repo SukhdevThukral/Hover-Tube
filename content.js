@@ -156,3 +156,17 @@ async function updatePopupWithData(id){
     }
 
 }
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "fetchXML") {
+        console.log("[Content] fetchXML received");
+        fetch(request.url)
+        .then(res => {
+            console.log("[Content] timedText response status:", res.status);
+            return res.text();
+        })
+        .then(text => sendResponse({ success: true, text }))
+        .catch(err => sendResponse({ success: false, error: err.message }));
+        return true;
+    }
+});
