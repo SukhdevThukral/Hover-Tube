@@ -10,7 +10,7 @@ stop wasting your time on clickbaits and random videos. HoverTube is an extensio
 
 ## Features
 
-- AI conclusion : It's powered by Gemini-1.5-Flash as of now but i keep running out of creds :(
+- AI conclusion : It's powered by Gemini-1.5-Flash (BYOK Model: Bring Your Own Key)
 - Transcript extraction: Scrapes and cleans YouTube captions realtime to feed accurate context to the LLM
 
 
