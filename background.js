@@ -36,26 +36,30 @@ async function getTranscript(videoId) {
         const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
         const html = await response.text();
         
-        const regex = /"captionTracks":\s*(\[.*?\])/;
-        const match= html.match(regex);
-        if (!match) return null;
-
-        const captionTracks = JSON.parse(match[1]);
-        const track = captionTracks.find(t => t.vssId.startsWith('.en')) || captionTracks[0];
-
-        const xmlResponse = await fetch(track.baseUrl);
-        const xml = await xmlResponse.text();
-
-        let cleanText = xml.replace(/<[^>]*>/g, ' ').replace(/&amp;#39;/g, ' ').replace(/&quot;/g, "'")
-        .replace(/\s+/g, '"').trim();
-
-        if (cleanText.length > 8000){
-            const start = cleanText.substring(0,4000);
-            const end = cleanText.substring(cleanText.length - 4000);
-            return `[START OF VIDEO]: ${start} ... [END OF VIDEO]: ${end}`;
+        const splitHtml = html.split('"captionTracks":')
+        if (splitHtml.length < 2 ){
+            return null;
         }
-        return cleanText;
+
+        const lastPart = splitHtml[1].split(']')[0] + ']';
+        const captions = JSON.parse(lastPart);
+
+        const track = captions.find(t => t.languageCode === 'en') || captions[0];
+        if(!track || !track.baseUrl){
+            return null;
+        }
+
+
+        const xmlRes = await fetch(track.baseUrl);
+        const xmlText = await xmlRes.text();
+
+        return xmlText.replace(/<text/g, ' ')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&amp;#39;/g, "'")
+        .replace(/&amp;quot;/g, '"').replace(/\s+/g, ' ').trim().substring(0, 10000);
+
     } catch(e){
+        console.log("Trans error:", e)
         return null;
     }
 }
@@ -65,9 +69,9 @@ async function fetchSummary(videoId, title, author, description, apiKey){
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
 
-    const safeDesc = (description || "No description is provided").substring(0,300);
+    const safeDesc = (description || "").replace(/https?:\/\/\S+/g, '').substring(0,500);
     const prompt = `
-    you are an expert content summarizer, generate a concise and accurate summary of the
+    you are an expert content analyser, generate a exact conclusion of the
     folowing youtube video.
 
     inputs:
@@ -83,7 +87,7 @@ async function fetchSummary(videoId, title, author, description, apiKey){
     4. avoid generic phrasing like "the video discusses" or "explores".
     5. do not include minor details, examples, or filler.
     6. ensure factual accuracy with no added assumptions.
-    7. do not use uncertain or hedgin language (e.g., "likely", "appears", "suggests").
+    7. do not use uncertain or hedging language (e.g., "likely", "appears", "suggests").
     8. write the summary as a definitive statement of the main conclusion.
     9. do not restate the same idea in different words
 
@@ -105,7 +109,12 @@ async function fetchSummary(videoId, title, author, description, apiKey){
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
-            contents: [{parts: [{text: prompt}] }]
+            contents: [{parts: [{text: prompt}] }],
+            generationConfig: {
+                temperature: 0.1,
+                topP: 0.8,
+                topK: 40
+            }
         })
     });
     const data = await response.json();
