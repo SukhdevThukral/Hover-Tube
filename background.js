@@ -41,11 +41,17 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
 
                 if (response?.success && response.xml?.trimStart().startsWith('<?xml')) {
 
-                    const cleaned = response.xml.replace(/<text/g, ' ').replace(/<[^>]*>/g, ' ')
+                    const full = response.xml.replace(/<text/g, ' ').replace(/<[^>]*>/g, ' ')
                     .replace(/&amp;#39;/g, "'").replace(/&amp;quot;/g, '"').replace(/\s+/g, ' ')
-                    .trim().substring(0,10000);
-                    resolve(cleaned);
+                    .trim()
+
+                    const chunk = 8000;
+                    const cleaned  = full.length <= chunk *3
+                        ? full.substring(0,25000)
+                        :full.substring(0, chunk) + ' ... ' + full.substring(Math.floor(full.length / 2) - chunk / 2, Math.floor(full.length/2) + chunk/2) + ' ... ' +
+                        full.substring(full.length - chunk)
                     
+                        resolve(cleaned)
                 } 
                 
                 else{
