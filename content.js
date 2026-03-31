@@ -158,15 +158,29 @@ async function updatePopupWithData(id){
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "fetchXML") {
-        console.log("[Content] fetchXML received");
-        fetch(request.url)
-        .then(res => {
-            console.log("[Content] timedText response status:", res.status);
-            return res.text();
+    if (request.action === "getTranscript"){
+        fetch('https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                context: {
+                    client: {clientName: 'ANDROID', clientVersion: '20.10.38'}
+                }, videoId: request.videoId
+            })
+        }).then(r => r.json())
+        .then(d => {
+            const tracks = d?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+            const track = tracks?.find(t => t.languageCode === 'en') || tracks?.[0];
+
+            if(!track?.baseUrl){
+                return sendResponse({success: false, error: "no track"});
+            }
+            return fetch(track.baseUrl + '&fmt=json3');
         })
-        .then(text => sendResponse({ success: true, text }))
-        .catch(err => sendResponse({ success: false, error: err.message }));
+        .then( r => r.text())
+        .then( xml => {
+            sendResponse({success: true, xml});
+        }).catch(err => sendResponse({success:false, error: err.message}));
         return true;
     }
 });
