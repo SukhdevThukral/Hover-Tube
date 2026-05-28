@@ -1,8 +1,15 @@
-let hoverTime,popup, currentId;
+let hoverTime,popup, currentId, scrollTimer;
+
+window.addEventListener('scroll', () => {
+    window._isScrolling = true;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => window._isScrolling = false, 300);
+});
 
 document.addEventListener('mouseover', (e) => {
     const link = e.target.closest('a');
     if (!link) return;
+    if (window._isScrolling) return;
 
     const videoId = extractId(link.href);
     if (videoId && videoId !== currentId) {
@@ -206,6 +213,8 @@ async function updatePopupWithData(id){
         } 
         });
     } catch (err){
+        const titleEl = document.getElementById('ht-title');
+        if (titleEl) titleEl.innerText = "Something went wrong.";
     }
 
 }
