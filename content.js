@@ -117,16 +117,72 @@ async function updatePopupWithData(id){
                     if (!summaryBox || !popup || !document.contains(popup) || id !== currentId) return;
 
                     if (aiResponse && aiResponse.success){
+                        const result = aiResponse.summary;
+
+                        const titleAccuracy = result?.titleAccuracy ?? null;
+                        const clickbaitScore = result?.clickbaitScore ?? null;
+
+                        const accuracyLabel = titleAccuracy === null
+                            ? "Unknown"
+                            : titleAccuracy >= 80
+                            ? "Accurate"
+                            : titleAccuracy >= 50
+                            ? "Mostly Accurate"
+                            : "Misleading" ;
+
+                        const clickbaitLabel = clickbaitScore === null
+                            ? "Unknown"
+                            : clickbaitScore <= 25
+                            ? "Low Clickbait"
+                            : clickbaitScore <= 60
+                            ? "Medium Clickbait"
+                            : "High Clickbait";
+
+
+                        const warningBanner = clickbaitScore !== null && clickbaitScore > 70
+                            ? `
+                                <div style="
+                                    margin-bottom:10px;
+                                    padding:8px;
+                                    border-radius:8px;
+                                    background:rgba(255,140,0,0.12);
+                                    border:1px solid rgba(255,140,0,0.3);
+                                    color:#ffb347;
+                                    font-size:12px;
+                                    font-weight:600;
+                                ">
+                                    ⚠️ Potentially Misleading Title
+                                </div>
+                            `
+                            : "";
+
                         summaryBox.innerHTML = 
                         `
-                        <div style="color: #4dbaff; font-size: 10px; font-weight: 800; margin-bottom: 4px; text-transform: uppercase;">Conclusion</div>
-                        <div style="color: #eee; font-size: 13.5px; line-height:1.5;">${aiResponse.summary}</div>
+                        ${warningBanner}
 
-                        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 10px; color: #777; display:flex; gap:12px;">
+                        <div style="color: #4dbaff; font-size: 10px; font-weight: 800; margin-bottom: 4px; text-transform: uppercase;">AI Takeaway</div>
+                        <div style="color: #eee; font-size: 13.5px; line-height:1.5;">${result.summary}</div>
+
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+
+                            <div style="padding: 6px 10px; border-radius: 999px; background: rgba(77,186,255,0.1); border: 1px solid rgba(77,186,255,0.2); 
+                                        color: #4dbaff; font-size: 11px; font-weight: 600;"> 
+                                🎯 ${accuracyLabel}
+                            </div>
+
+                            <div style="padding: 6px 10px; border-radius: 999px; backhround: rgba(77,186,255,0.1); border: 1px solid rgba(77,186,255,0.2); 
+                                        color: #4dbaff; font-size: 11px; font-weight: 600;"> 
+                                ⚠️ ${clickbaitLabel}
+                            </div>
+
+                        </div>
+
+                        <div style="display: flex; gap: 12px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); font-size:10px;">
                             <span><strong style="color:#aaa">VIEWS</strong> ${views}</span>
                             <span><strong style="color:#aaa">LIKES</strong> ${likes}</span>
-                            <span style="margin-left: auto;">${video.snippet.channelTitle}</span>
+                            <span style="margin-left:auto;">${video.snippet.channelTitle}</span>
                         </div>
+
                         `;
                     } else {
                         summaryBox.innerHTML = `<span style="color: #ff4d4d;">AI was unable to process this video.</span>`;
@@ -176,6 +232,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 return sendResponse({success: false, error: "no track"});
             }
             return fetch(track.baseUrl + '&fmt=json3');
+            console.log(response.xml?.slice(0,100));
         })
         .then( r => r.text())
         .then( xml => {

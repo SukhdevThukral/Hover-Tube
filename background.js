@@ -34,6 +34,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function fetchSummary(videoId, title, author, description, apiKey, tabID){
 
+
     let transcript = null;
     if (tabID) {
         transcript = await new Promise((resolve) => {
@@ -45,11 +46,16 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
                     .replace(/&amp;#39;/g, "'").replace(/&amp;quot;/g, '"').replace(/\s+/g, ' ')
                     .trim()
 
-                    const chunk = 8000;
-                    const cleaned  = full.length <= chunk *3
-                        ? full.substring(0,25000)
-                        :full.substring(0, chunk) + ' ... ' + full.substring(Math.floor(full.length / 2) - chunk / 2, Math.floor(full.length/2) + chunk/2) + ' ... ' +
-                        full.substring(full.length - chunk)
+                    const chunk = 4000;
+                    const cleaned  = full.length <= chunk * 5
+                        ? full 
+                        : [
+                            full.slice(0, chunk), 
+                            full.slice(Math.floor(full.length * 0.25), Math.floor(full.length * 0.25) + chunk),
+                            full.slice(Math.floor(full.length * 0.50), Math.floor(full.length * 0.50) + chunk),
+                            full.slice(Math.floor(full.length * 0.75), Math.floor(full.length * 0.75) + chunk),
+                            full.slice(-chunk)
+                        ].join(" ... ");
                     
                         resolve(cleaned)
                 } 
@@ -65,38 +71,60 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
 
     const safeDesc = (description || "").replace(/https?:\/\/\S+/g, '').substring(0,500);
     const prompt = `
-    you are an expert content analyser, generate a exact conclusion of the
-    folowing youtube video.
+ You are an expert content analyst.
 
-    inputs:
-    Author: ${author}
-    Title: ${title}
-    Description: ${safeDesc}
-    Transcript Snippet: ${transcript || "N/A"}
+Your goal is to determine the most important information a viewer would gain from watching this video.
 
-    Instructions:
-    1. if a transcript is provided, base the summary strictly on it. Ignore assumptions from title/description unless supported.
-    2.  If no transcript is available, infer the core message only from the title and description.
-    3. Identify and summarize the single core argument or key takeaway of the video (not just topics).
-    4. avoid generic phrasing like "the video discusses" or "explores".
-    5. do not include minor details, examples, or filler.
-    6. ensure factual accuracy with no added assumptions.
-    7. do not use uncertain or hedging language (e.g., "likely", "appears", "suggests").
-    8. write the summary as a definitive statement of the main conclusion.
-    9. do not restate the same idea in different words
+Inputs:
+Author: ${author}
+Title: ${title}
+Description: ${safeDesc}
+Transcript: ${transcript || "N/A"}
 
-    good examples:
-    ❌ Bad: The video discusses the impact of social media on society.
-    ✅ Good: Social media platforms amplify misinformation by prioritizing engagement over accuracy.
+Rules:
 
-    ❌ Bad: The video explores India's food culture and debates.
-    ✅ Good: Claims about uniform Hindu dietary restrictions are misleading, as historical and regional practices show significant variation.
+1. If a transcript exists, rely primarily on the transcript.
+2. Use title and description only as supporting context.
+3. Do not infer facts that are not present in the provided content.
+4. Extract the central takeaway, finding, recommendation, argument, or result.
+5. For tutorials, summarize what the viewer learns.
+6. For reviews, summarize the verdict.
+7. For news, summarize the key development.
+8. For discussions, summarize the strongest takeaway.
+9. Ignore sponsorships, introductions, jokes, and filler.
+10. Avoid phrases like:
+   - "The video discusses..."
+   - "The creator talks about..."
+   - "This video explores..."
+11. Be direct and specific.
+12. Avoid repeating ideas.
+13. Do not mention the author or channel.
 
-    Output Requirements:
-    - 1-2 sentences (prefer 1 if possible).
-    - clear, specific, and conclusion-focused
-    - no extra commentary or labels
+Return ONLY valid JSON.
 
+Schema:
+
+{
+"summary": "string",
+"titleAccuracy" : number,
+"clickbaitScore" : number,
+"confidence": number
+}
+
+Additionally evaluate:
+
+1. Title Accuracy
+ - does the title accurately represent the content?
+ - score 0-100.
+
+2. Clickbait Score
+- score 0-100
+- 0 = Completely honest.
+- 100 = highly misleading.
+
+3. Confidence
+- Score 0-100
+- Reflect confidence based on transcript quality and available info.
     `;
 
     const response = await fetch(url, {
@@ -107,7 +135,8 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
             generationConfig: {
                 temperature: 0.1,
                 topP: 0.8,
-                topK: 40
+                topK: 40,
+                responseMimeType: "application/json"
             }
         })
     });
@@ -119,5 +148,17 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
         throw new Error("Gemnini returned an empty response :(");
     }
 
-    return data.candidates[0].content.parts[0].text;
+    const raw =  data.candidates[0].content.parts[0].text;
+
+    try {
+        return JSON.parse(raw)
+    }
+    catch (err) {
+        return{
+            summary: raw,
+            titleAccuracy: null,
+            clickbaitScore: null,
+            confidence: null
+        };
+    }
 }
