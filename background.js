@@ -99,7 +99,10 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
         1. If a transcript exists, rely primarily on the transcript.
         2. Use title and description only as supporting context.
         3. Do not infer facts that are not present in the provided content.
-        4. Extract the central takeaway, finding, recommendation, argument, or result.
+        4. Extract the key findings as 2-4 short bullet points.
+            Each bullet max 15 words.
+            Cover: main finding, any controversy/verdict, key context if critical.
+            No filler, no repetition.
         5. For tutorials, summarize what the viewer learns.
         6. For reviews, summarize the verdict.
         7. For news, summarize the key development.
