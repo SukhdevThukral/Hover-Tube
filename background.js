@@ -34,37 +34,58 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function fetchSummary(videoId, title, author, description, apiKey, tabID){
 
+    const timerId = `HoverTube-${videoId}`;
+    console.time(timerId);
+    const cacheKey = `hovertube_${videoId}`
+
+    const cached = await chrome.storage.local.get(cacheKey)
+
+    const TTL = 1000 * 60 * 60 * 24;
+    if (cached[cacheKey] && Date.now() - cached[cacheKey].cachedAt < TTL) {
+        return cached[cacheKey];
+    }
 
     let transcript = null;
-    if (tabID) {
-        transcript = await new Promise((resolve) => {
-            chrome.tabs.sendMessage(tabID, {action: "getTranscript", videoId}, (response) => {
 
+    if (tabID) {
+
+        console.time("Transcript");
+
+        transcript = await Promise.race([ new Promise((resolve) => {
+            chrome.tabs.sendMessage(tabID, {action: "getTranscript", videoId}, (response) => {
+                console.log(response);
                 if (response?.success && response.xml?.trimStart().startsWith('<?xml')) {
 
                     const full = response.xml.replace(/<text/g, ' ').replace(/<[^>]*>/g, ' ')
                     .replace(/&amp;#39;/g, "'").replace(/&amp;quot;/g, '"').replace(/\s+/g, ' ')
                     .trim()
 
-                    const chunk = 4000;
-                    const cleaned  = full.length <= chunk * 5
+                    const chunk = 1500;
+                    const cleaned  = full.length <= chunk * 4
                         ? full 
                         : [
                             full.slice(0, chunk), 
-                            full.slice(Math.floor(full.length * 0.25), Math.floor(full.length * 0.25) + chunk),
-                            full.slice(Math.floor(full.length * 0.50), Math.floor(full.length * 0.50) + chunk),
-                            full.slice(Math.floor(full.length * 0.75), Math.floor(full.length * 0.75) + chunk),
+                            full.slice(Math.floor(full.length * 0.33), Math.floor(full.length * 0.33) + chunk),
+                            full.slice(Math.floor(full.length * 0.66), Math.floor(full.length * 0.66) + chunk),
                             full.slice(-chunk)
                         ].join(" ... ");
                     
-                        resolve(cleaned)
+                        resolve(cleaned);
                 } 
                 
                 else{
+                    console.timeEnd("Transcript");
                     resolve(null);
                 }
-            });
-        });
+            }
+        );
+        }), new Promise(resolve => 
+            setTimeout(() => {
+                console.timeEnd("Transcript");
+                resolve(null);
+            }, 2500)
+            )
+        ]);
     }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
@@ -126,7 +147,7 @@ Additionally evaluate:
 - Score 0-100
 - Reflect confidence based on transcript quality and available info.
     `;
-
+    console.time('Gemini');
     const response = await fetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -141,17 +162,27 @@ Additionally evaluate:
         })
     });
     const data = await response.json();
+    console.timeEnd("Gemini");
+    console.timeEnd(timerId);
 
     if (data.error) throw new Error(data.error.message);
 
     if (!data.candidates || !data.candidates[0].content){
         throw new Error("Gemnini returned an empty response :(");
     }
-
+    console.log("Gemini response:", data);
     const raw =  data.candidates[0].content.parts[0].text;
+    console.log("Raw output:", raw);
 
     try {
-        return JSON.parse(raw)
+        const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+
+        await chrome.storage.local.set({
+            [cacheKey] : { ...parsed, cachedAt: Date.now() }
+        }); 
+
+        return parsed;
     }
     catch (err) {
         return{

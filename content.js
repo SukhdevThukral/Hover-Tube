@@ -163,14 +163,14 @@ async function updatePopupWithData(id){
                         <div style="color: #4dbaff; font-size: 10px; font-weight: 800; margin-bottom: 4px; text-transform: uppercase;">AI Takeaway</div>
                         <div style="color: #eee; font-size: 13.5px; line-height:1.5;">${result.summary}</div>
 
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top:12px;">
 
                             <div style="padding: 6px 10px; border-radius: 999px; background: rgba(77,186,255,0.1); border: 1px solid rgba(77,186,255,0.2); 
                                         color: #4dbaff; font-size: 11px; font-weight: 600;"> 
                                 🎯 ${accuracyLabel}
                             </div>
 
-                            <div style="padding: 6px 10px; border-radius: 999px; backhround: rgba(77,186,255,0.1); border: 1px solid rgba(77,186,255,0.2); 
+                            <div style="padding: 6px 10px; border-radius: 999px; background: rgba(77,186,255,0.1); border: 1px solid rgba(77,186,255,0.2); 
                                         color: #4dbaff; font-size: 11px; font-weight: 600;"> 
                                 ⚠️ ${clickbaitLabel}
                             </div>
@@ -231,8 +231,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if(!track?.baseUrl){
                 return sendResponse({success: false, error: "no track"});
             }
-            return fetch(track.baseUrl + '&fmt=json3');
-            console.log(response.xml?.slice(0,100));
+            return fetch(track.baseUrl);
+
         })
         .then( r => r.text())
         .then( xml => {
