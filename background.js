@@ -34,8 +34,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function fetchSummary(videoId, title, author, description, apiKey, tabID){
 
-    const timerId = `HoverTube-${videoId}`;
-    console.time(timerId);
     const cacheKey = `hovertube_${videoId}`
 
     const cached = await chrome.storage.local.get(cacheKey)
@@ -48,12 +46,8 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
     let transcript = null;
 
     if (tabID) {
-
-        console.time("Transcript");
-
         transcript = await Promise.race([ new Promise((resolve) => {
             chrome.tabs.sendMessage(tabID, {action: "getTranscript", videoId}, (response) => {
-                console.log(response);
                 if (response?.success && response.xml?.trimStart().startsWith('<?xml')) {
 
                     const full = response.xml.replace(/<text/g, ' ').replace(/<[^>]*>/g, ' ')
@@ -74,14 +68,12 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
                 } 
                 
                 else{
-                    console.timeEnd("Transcript");
                     resolve(null);
                 }
             }
         );
         }), new Promise(resolve => 
             setTimeout(() => {
-                console.timeEnd("Transcript");
                 resolve(null);
             }, 2500)
             )
@@ -92,62 +84,61 @@ async function fetchSummary(videoId, title, author, description, apiKey, tabID){
 
     const safeDesc = (description || "").replace(/https?:\/\/\S+/g, '').substring(0,500);
     const prompt = `
- You are an expert content analyst.
+        You are an expert content analyst.
 
-Your goal is to determine the most important information a viewer would gain from watching this video.
+        Your goal is to determine the most important information a viewer would gain from watching this video.
 
-Inputs:
-Author: ${author}
-Title: ${title}
-Description: ${safeDesc}
-Transcript: ${transcript || "N/A"}
+        Inputs:
+        Author: ${author}
+        Title: ${title}
+        Description: ${safeDesc}
+        Transcript: ${transcript || "N/A"}
 
-Rules:
+        Rules:
 
-1. If a transcript exists, rely primarily on the transcript.
-2. Use title and description only as supporting context.
-3. Do not infer facts that are not present in the provided content.
-4. Extract the central takeaway, finding, recommendation, argument, or result.
-5. For tutorials, summarize what the viewer learns.
-6. For reviews, summarize the verdict.
-7. For news, summarize the key development.
-8. For discussions, summarize the strongest takeaway.
-9. Ignore sponsorships, introductions, jokes, and filler.
-10. Avoid phrases like:
-   - "The video discusses..."
-   - "The creator talks about..."
-   - "This video explores..."
-11. Be direct and specific.
-12. Avoid repeating ideas.
-13. Do not mention the author or channel.
+        1. If a transcript exists, rely primarily on the transcript.
+        2. Use title and description only as supporting context.
+        3. Do not infer facts that are not present in the provided content.
+        4. Extract the central takeaway, finding, recommendation, argument, or result.
+        5. For tutorials, summarize what the viewer learns.
+        6. For reviews, summarize the verdict.
+        7. For news, summarize the key development.
+        8. For discussions, summarize the strongest takeaway.
+        9. Ignore sponsorships, introductions, jokes, and filler.
+        10. Avoid phrases like:
+        - "The video discusses..."
+        - "The creator talks about..."
+        - "This video explores..."
+        11. Be direct and specific.
+        12. Avoid repeating ideas.
+        13. Do not mention the author or channel.
 
-Return ONLY valid JSON.
+        Return ONLY valid JSON.
 
-Schema:
+        Schema:
 
-{
-"summary": "string",
-"titleAccuracy" : number,
-"clickbaitScore" : number,
-"confidence": number
-}
+        {
+        "summary": "string",
+        "titleAccuracy" : number,
+        "clickbaitScore" : number,
+        "confidence": number
+        }
 
-Additionally evaluate:
+        Additionally evaluate:
 
-1. Title Accuracy
- - does the title accurately represent the content?
- - score 0-100.
+        1. Title Accuracy
+        - does the title accurately represent the content?
+        - score 0-100.
 
-2. Clickbait Score
-- score 0-100
-- 0 = Completely honest.
-- 100 = highly misleading.
+        2. Clickbait Score
+        - score 0-100
+        - 0 = Completely honest.
+        - 100 = highly misleading.
 
-3. Confidence
-- Score 0-100
-- Reflect confidence based on transcript quality and available info.
+        3. Confidence
+        - Score 0-100
+        - Reflect confidence based on transcript quality and available info.
     `;
-    console.time('Gemini');
     const response = await fetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -162,17 +153,14 @@ Additionally evaluate:
         })
     });
     const data = await response.json();
-    console.timeEnd("Gemini");
-    console.timeEnd(timerId);
 
     if (data.error) throw new Error(data.error.message);
 
     if (!data.candidates || !data.candidates[0].content){
         throw new Error("Gemnini returned an empty response :(");
     }
-    console.log("Gemini response:", data);
+
     const raw =  data.candidates[0].content.parts[0].text;
-    console.log("Raw output:", raw);
 
     try {
         const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();

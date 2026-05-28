@@ -49,7 +49,7 @@
                 font-weight: 900;
                 color: #000;
                 font-size: 18px;
-                box-shadow: 0 4px 12px rbga(77, 186, 255, 0.2);
+                box-shadow: 0 4px 12px rgba(77, 186, 255, 0.2);
             }
 
             .logo-text{
@@ -139,7 +139,7 @@
                 font-weight: 700;
                 cursor: pointer;
                 font-size: 12px;
-                transition: transform 0.1s opacity 0.2s;
+                transition: transform 0.1s, opacity 0.2s;
             }
 
             #save-key:hover { opacity: 0.9;}
@@ -197,16 +197,23 @@
         </div>
 
         <p class="desc">
-            Hover over any YouTube link to analyze the content and get a fixed AI conclusion instantly :3.
+            Hover over any YouTube link to analyze the content and get an AI-powered conclusion instantly :3.
         </p>
 
         <div class="key-section">
 
-            <div class="label">Gemini API Key</div>
+            <div class="label">Gemini 2.5 Flash API Key</div>
 
             <div id="key-input-container">
                 <input type="password" id="api-key-input" placeholder="Paste your API key here...">
                 <button id="save-key">SAVE CONFIGURATION</button>
+            </div>
+
+            <div style="font-size: 12px; color: #555; margin-top: 15px; margin-bottom: 15px;">
+                Dont have a key???  <br>    
+                <a href="https://aistudio.google.com/api-keys" target="_blank" style="color:#4dbaff; text-decoration: none;">
+                           Get one free →
+                </a>
             </div>
             
             <div id="key-active-container" style="display: none; text-align: center; padding: 5px 0;">

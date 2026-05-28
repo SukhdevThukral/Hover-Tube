@@ -59,7 +59,6 @@ function renderPopup(x,y,id){
     popup.innerHTML = `
         <div class="ht-meta-header">
             <span class="ht-brand-tag">Analyzing</span>
-            <span style="font-size: 10px; color: #fff; font-family: monospace;">ID: ${id}</span>
         </div>
         <div style="font-weight: 600;color: #fff; margin-bottom: 8px; font-size: 14px;" id="ht-title">
             Fetching YouTube Data...
@@ -79,7 +78,6 @@ async function updatePopupWithData(id){
     if (!popup) return;
 
     if ( typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.id) {
-        console.warn("Hover Tube: Extension context invalidated. Please refresh the page.");
         const titleEl = document.getElementById('ht-title');
         if (titleEl) titleEl.innerText = "Please refresh the page to continue.";
         return;
@@ -208,7 +206,6 @@ async function updatePopupWithData(id){
         } 
         });
     } catch (err){
-        console.error('Communication breakdown:', err);
     }
 
 }
