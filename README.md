@@ -6,13 +6,29 @@
 
 stop wasting your time on clickbaits and random videos. HoverTube is an extension that uses Gemini AI to analyse transcripts and metadata, delivering a 1-2 sentence conclusion the moment you hover over a YouTube link anywhere on the internet!!
 
-<img width="342" height="270" alt="image" src="https://github.com/user-attachments/assets/e2b9db69-1e65-4df8-9c35-dc4f31e7ea8e" />
+<img width="800" height="450" alt="hovertube-demo-1779979251639-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/e82c0c7a-8d91-4012-ace3-852990016df9" />
 
+## Installation
+
+Not on the Chrome Web Store yet but you can sideload it in 30 seconds:
+
+1. Download or clone this repo
+```
+git clone https://github.com/SukhdevThukral/Hover-Tube.git
+```
+2. Go to `chrome://extensions`
+3. Enable **Developer Mode** (toggle, top right)
+4. Click **Load unpacked**
+5. Select the downloaded folder
+6. Then open the extension popup, paste your Gemini API key, and you're done.
+
+> Get a free API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 
 ## Features
 
-- AI conclusion : It's powered by Gemini-1.5-Flash (BYOK Model: Bring Your Own Key)
+- AI conclusion : It's powered by Gemini-2.5-Flash (BYOK Model: Bring Your Own Key)
 - Transcript extraction: Scrapes and cleans YouTube captions realtime to feed accurate context to the LLM
+- Gives clickbait and title accuracy data
 
 
 ## Tech Stack
