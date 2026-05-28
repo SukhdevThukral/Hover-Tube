@@ -6,6 +6,7 @@
 
 stop wasting your time on clickbaits and random videos. HoverTube is an extension that uses Gemini AI to analyse transcripts and metadata, delivering a 1-2 sentence conclusion the moment you hover over a YouTube link anywhere on the internet!!
 
+<img width="342" height="270" alt="image" src="https://github.com/user-attachments/assets/e2b9db69-1e65-4df8-9c35-dc4f31e7ea8e" />
 
 
 ## Features
